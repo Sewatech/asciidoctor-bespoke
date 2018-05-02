@@ -1,0 +1,17 @@
+- _width, _height = (local_attr :width), (local_attr :height)
+
+- _style=""
+- _style+="width:#{_width};" if _width
+- _style+="height:#{_height};" if _height
+
+span class=['image',(attr :role)]
+- if attr? :link
+    a.image href=(attr :link)
+
+- if type == 'icon' && font_icons?
+  i class=icon_fa_classes title=(attr :title)
+- elsif type == 'icon' && !icons?
+  |[#{attr :alt}]
+- else
+  - src = (type == 'icon' ? (icon_uri target) : (image_uri target))
+  img src=image_uri(@target) alt=(attr :alt) style=_style title=(attr :title)

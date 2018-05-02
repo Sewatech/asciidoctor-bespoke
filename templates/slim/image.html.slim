@@ -1,4 +1,13 @@
 - _target, _alt, _width, _height, _format, _link, _reload = (local_attr :target), (local_attr :alt), (local_attr :width), (local_attr :height), (local_attr :format), (local_attr :link), ('true' if option? :reload)
+
+- if _width 
+  - _style="width:#{_width};"
+- else
+  - _style=""
+- if _height 
+  - _style=_style + "height:#{_height};"
+
+/ div class=(('foo ' if is_foo?) + ('bar' if is_bar?))
 / QUESTION support default image role?
 figure.image id=id class=[role, ('flux' if option? :flux)]
   / TODO append an index/counter to the alt attribute (since it's otherwise shared)
@@ -10,11 +19,11 @@ figure.image id=id class=[role, ('flux' if option? :flux)]
         - when _svg
           =include_svg _target
         - when _obj
-          object type='image/svg+xml' data=(image_uri _target) width=_width height=_height data-reload=_reload
+          object type='image/svg+xml' data=(image_uri _target) style=_style data-reload=_reload
             / TODO support fallback option
             span.alt=_alt
       - else
-        img src=(image_uri _target) alt=_alt width=_width height=_height data-reload=_reload
+        img src=(image_uri _target) alt=_alt style=_style data-reload=_reload
     - if _link
       a.image href=_link
         - yield_content :img
