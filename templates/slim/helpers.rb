@@ -9,7 +9,9 @@ module Slim::Helpers
     'items' => 'build-items'
   }
 
+  SvgPreambleRx = /\A.*?(?=<svg\b)/m
   SvgStartTagRx = /\A<svg[^>]*>/
+  DimensionAttributeRx = /\s(?:width|height|style)=(["']).*?\1/
   ViewBoxAttributeRx = /\sview[bB]ox="[^"]+"/
   WidthAttributeRx = /\swidth="([^"]+)"/
   HeightAttributeRx = /\sheight="([^"]+)"/
@@ -192,7 +194,7 @@ module Slim::Helpers
   end
 
   def include_svg target
-    if (svg = html5_converter.read_svg_contents self, target)
+    if (svg = read_svg_contents self, target)
       # add viewBox attribute if missing
       unless ViewBoxAttributeRx =~ (start_tag = SvgStartTagRx.match(svg)[0])
         if (width = start_tag.match WidthAttributeRx) && (width = width[1].to_f) >= 0 &&
@@ -206,6 +208,23 @@ module Slim::Helpers
     else
       %(<span class="alt">#{local_attr :alt}</span>)
     end
+  end
+
+  def read_svg_contents node, target
+    if (svg = node.read_contents target, start: (node.document.attr 'imagesdir'), normalize: true, label: 'SVG')
+      svg = svg.sub SvgPreambleRx, '' unless svg.start_with? '<svg'
+      old_start_tag = new_start_tag = nil
+      # NOTE width, height and style attributes are removed if either width or height is specified
+      ['width', 'height'].each do |dim|
+        if node.attr? dim
+          new_start_tag = (old_start_tag = (svg.match SvgStartTagRx)[0]).gsub DimensionAttributeRx, '' unless new_start_tag
+          # QUESTION should we add px since it's already the default?
+          new_start_tag = %(#{new_start_tag.chop} #{dim}="#{node.attr dim}">)
+        end
+      end
+      svg = %(#{new_start_tag}#{svg[old_start_tag.length..-1]}) if new_start_tag
+    end
+    svg
   end
 
   def spacer
